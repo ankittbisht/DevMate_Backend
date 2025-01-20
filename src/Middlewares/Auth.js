@@ -4,8 +4,9 @@ const User = require("../Models/User");
 const adminauth = async (req, res, next) => {
   try {
     const cookies = req.cookies;
-    // console.log(cookies)
+
     const { token } = cookies;
+    console.log("token: " + token);
     if (!token) {
       return res.status(401).send("Please Log in ");
     }
