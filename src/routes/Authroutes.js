@@ -20,7 +20,14 @@ authRoutes.post("/signup", async (req, res) => {
     const token = await jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
-    res.cookie("token", token);
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true, // Ensure cookies are sent over HTTPS
+      sameSite: "None", // Allow cross-origin
+      // secure: false, // Disable for local development (use true in production)
+      // sameSite: "Lax", // Use "Lax" for local dev, "None" in production
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
     res.send(user);
   } catch (err) {
     // console.log(err);
@@ -40,7 +47,15 @@ authRoutes.post("/login", async (req, res) => {
     // console.log("isMatch:", isMatch);
     if (isMatch) {
       const token = await user.getJWT();
-      res.cookie("token", token);
+
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: true, // Ensure cookies are sent over HTTPS
+        sameSite: "None", // Allow cross-origin
+        // secure: false, // Disable for local development (use true in production)
+        // sameSite: "Lax", // Use "Lax" for local dev, "None" in production
+        maxAge: 24 * 60 * 60 * 1000, // 1 day
+      });
       res.send(user);
     } else {
       throw new Error("invalid credentials");
