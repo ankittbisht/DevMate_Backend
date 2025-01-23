@@ -4,7 +4,6 @@ const ConnectionRequest = require("../Models/connectionRequestSchema");
 const User = require("../Models/User");
 const { adminauth } = require("../Middlewares/Auth");
 
-
 requestRouter.post(
   "/request/send/:status/:toUserId",
   adminauth,
@@ -15,6 +14,7 @@ requestRouter.post(
       const status = req.params.status;
 
       const allowedStatus = ["ignored", "interested"];
+
       if (!allowedStatus.includes(status)) {
         return res
           .status(400)
@@ -23,6 +23,7 @@ requestRouter.post(
 
       //check if touserId exist or not
       const toUser = await User.findById(toUserId);
+
       if (!toUser) {
         return res.status(404).send({ message: "User Not Found!!" });
       }
@@ -79,6 +80,7 @@ requestRouter.post(
         toUserId: loggedInUser._id,
         status: "interested",
       });
+
       if (!connectionRequest) {
         return res
           .status(404)
@@ -91,6 +93,35 @@ requestRouter.post(
       res.json({ message: " connection request " + status, data });
     } catch (err) {
       res.status(400).send("Error: " + err.message);
+    }
+  }
+);
+
+requestRouter.patch(
+  "/request/ignored/:toUserId",
+  adminauth,
+  async (req, res) => {
+    try {
+      const fromUserId = req.user._id;
+      const toUserId = req.params.toUserId;
+
+      const connectionRequests = await ConnectionRequest.findOne({
+        $or: [
+          { fromUserId, toUserId, status: "accepted" },
+          { fromUserId: toUserId, toUserId: fromUserId, status: "accepted" },
+        ],
+      });
+
+      if (!connectionRequests) {
+        return res.status(400).send({ message: "No such connection exists" });
+      }
+
+      await connectionRequests.updateOne({ status: "ignored" });
+
+      res.json({ message: "Connection request has been ignored." });
+    } catch (err) {
+      console.error("Error ignoring connection request:", err);
+      res.status(500).send({ error: "An internal server error occurred." });
     }
   }
 );

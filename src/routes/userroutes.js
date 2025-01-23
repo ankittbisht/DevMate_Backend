@@ -23,6 +23,7 @@ userRoutes.get("/user/request/received", adminauth, async (req, res) => {
 userRoutes.get("/user/connection", adminauth, async (req, res) => {
   try {
     const loggedInUser = req.user;
+
     // Retrieve all received requests by the loggedInUser
     const connectionRequest = await ConnectionRequest.find({
       $or: [
@@ -33,12 +34,16 @@ userRoutes.get("/user/connection", adminauth, async (req, res) => {
     })
       .populate("fromUserId", ["firstName", "lastName"])
       .populate("toUserId", ["firstName", "lastName"]);
+
+    //       If the logged-in user is the sender (fromUserId matches loggedInUser._id), return the recipient (toUserId).
+    // Otherwise, return the sender (fromUserId).
     const data = connectionRequest.map((row) => {
       if (row.fromUserId._id.toString() === loggedInUser._id.toString()) {
         return row.toUserId;
       }
       return row.fromUserId;
     });
+
     res.json({
       message: "connection request found",
       data,
